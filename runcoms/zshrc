@@ -1,14 +1,263 @@
-#
-# Executes commands at the start of an interactive session.
-#
-# Authors:
-#   Sorin Ionescu <sorin.ionescu@gmail.com>
-#
+source ~/.zprezto/init.zsh
+# source ~/.oh-my-zsh-config.zsh
 
-# Source Prezto.
-if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
-  source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
-fi
+#################
+### VARIABLES ###
+#################
+export SUBLIME=subl
+export EDITOR="$SUBLIME --wait"
+export VISUAL=$EDITOR
+export LSCOLORS="exfxcxdxbxegedabagacad"
+export GITX_HOME=/Applications/GitX.app/Contents/Resources
+export HEROKU_HOME=/usr/local/heroku
+export RBENV_HOME=$HOME/.rbenv
+export NPM_HOME=/usr/local/share/npm
+export PATH=$NPM_HOME/bin:$HEROKU_HOME/bin:$GITX_HOME:$RBENV_HOME/bin:/usr/local/bin:/usr/local/sbin:$PATH
+export GITLAB_VAGRANT_MEMORY=2048
+export GITLAB_VAGRANT_CORES=4
 
-# Customize to your needs...
+###########################
+### ALIASES & FUNCTIONS ###
+###########################
 
+# Unix
+alias ll="ls -lh"
+alias la="ls -A"
+alias lla="ll -A"
+alias lld="ll -d"
+alias llrt="ll -rt"
+alias rm="rm"
+alias rmrf="rm -rf"
+alias f="find . -iname"
+alias ff="find . -type f -iname"
+fw() { grep -inr "$@" . }
+mv.() {
+  if [ -n $1 ]; then
+    local dir_name=${PWD##*/}
+    cd .. ; mv $dir_name $1 ; cd $1
+  fi
+}
+hs() { history | grep $* }
+alias hsi='hs -i'
+alias cpr='cp -r'
+alias ...='cd ../..'
+
+# Confs
+alias reload=". ~/.zshrc"
+alias conf="$SUBLIME ~/.zshrc"
+
+# Git
+alias gl="git pull --rebase"
+alias gs="git status"
+alias ga='git add'
+alias gaa="git add --all"
+alias gbr="gb -r"
+gcmm() { gc -m "$*" }
+gcamm() { gca -m "$*" }
+alias gaamm="gaa && gcmm"
+alias gco='git checkout'
+alias gcob="gco -b"
+alias gc-="gco -"
+alias gco-="gco -"
+alias gcm='git checkout master'
+alias gclean="git clean -fd"
+alias gd='git diff'
+alias gdc="gd --cached"
+alias gdh="gd HEAD^"
+alias gg="glgga --oneline"
+# alias glo="git log --oneline --decorate"
+# alias glog="git log"
+# alias glo='git log --pretty=format:"%C(yellow)%h %C(blue)%ad%C(red)%d %C(reset)%s%C(green) [%cn]" --decorate --date=relative'
+alias glo="git log --abbrev-commit --decorate --date=relative --format=format:'%C(yellow)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(auto)%d%C(reset)'"
+alias gdt="git difftool"
+alias gdtc="git difftool --cached"
+alias gmt="git mergetool"
+alias grm="git rm"
+alias grmc="git rm --cached"
+alias grs="git remote show"
+alias gr="git reset"
+alias grh='git reset HEAD'
+alias grhh='git reset HEAD --hard'
+alias "grh^"="git reset 'HEAD^'"
+alias "grhh^"="git reset --hard 'HEAD^'"
+alias gst="git stash"
+alias grb="git rebase"
+alias grb-="git rebase -"
+alias grbm="git rebase master"
+alias grbi="git rebase -i"
+alias gcontinue="git rebase --continue"
+alias gabort="git rebase --abort"
+alias gskip="git rebase --skip"
+alias gb='git branch'
+alias gbd="git branch -d"
+alias gbD="git branch -D"
+alias gbDs="git branch | cut -c3- | egrep -i '^s+a+v+.*' | xargs git branch -D"
+alias gignore="git update-index --assume-unchanged"
+alias gunignore="git update-index --no-assume-unchanged"
+alias gignored="git ignored"
+alias gp='git push'
+alias gpf="gp -f"
+alias gbm="gb -m"
+alias gpu="gp -u"
+alias gclo-"git clone"
+alias gx="gitx"
+alias gshow="git show"
+alias gd='git diff'
+alias git-branch-previous='git check-ref-format --branch "@{-1}"'
+ggo() {
+  git_previous_branch=`git-branch-current`
+
+  gaa && gcmm "current work"
+  if [ $? -eq 0 ]; then; git_committed=true; fi
+
+  gcm
+}
+gback() {
+  gco $git_previous_branch
+
+  if [ $git_committed ]; then; grh^; fi
+  git_committed=""
+}
+grebase() {
+  local src_branch=`git-branch-current`
+
+  gcm && gl && gco $src_branch && grbm
+}
+
+# Github
+hc() {
+  case $# in
+  0)  echo "0"
+      hub compare `git-branch-current`
+      ;;
+  1)  echo "1"
+      hub compare $1..`git-branch-current`
+      ;;
+  2)  echo "2"
+      hub compare $1..$2
+      ;;
+  *)  hub compare
+      ;;
+  esac
+}
+alias hc-='hc `git-branch-previous`'
+alias hb="hub browse"
+alias hp="hb -- pulls"
+alias hw="hb -- wiki"
+alias hf="hub fork"
+
+# Folders
+alias st2='cd ~/Library/Application\ Support/Sublime\ Text\ 2/Packages'
+alias st3='cd ~/Library/Application\ Support/Sublime\ Text\ 3/Packages'
+alias stproj='cd ~/.sublime/projects'
+alias gitlab='cd ~/s/cookbook-gitlab/home_git/gitlab'
+
+# SSH
+alias ssh_conf="$SUBLIME ~/.ssh/config"
+alias ssh_key="cat ~/.ssh/id_rsa.pub | pbcopy"
+
+# OS X
+alias vim="mvim"
+term() {
+  curr_dir=$PWD
+  osascript <<-eof
+    tell application "iTerm"
+      make new terminal
+      tell the last terminal
+        activate current session
+        launch session "Default Session"
+        tell the last session
+          write text "cd \"$curr_dir\"; clear"
+        end tell
+      end tell
+    end tell
+eof
+}
+alias s="subl"
+alias s.="subl ."
+alias unrar="unrar e"
+alias zzz="pmset sleepnow"
+alias say_good="say -v Good ooooooooooooooooooooooooooooooooooooooooooooooooooo"
+alias say_bad="say -v Bad ooooooooooooooooooooooooooooooooooooooooooooooooooo"
+alias empty_cache="echo '' > /Users/jerome/Library/Application\ Support/Google/Chrome/Default/History\ Provider\ Cache"
+alias keyboard_disable='sudo kextunload /System/Library/Extensions/AppleUSBTopCase.kext/Contents/PlugIns/AppleUSBTCKeyboard.kext'
+alias keyboard_enable='sudo kextload /System/Library/Extensions/AppleUSBTopCase.kext/Contents/PlugIns/AppleUSBTCKeyboard.kext'
+alias toggle_cam="open ~/Documents/scripts/isightdisabler4.scpt"
+alias iphone="open /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Applications/iPhone\ Simulator.app"
+timer() { sleep $(($1*60)); terminal-notifier -message "${*:2}" }
+ip() {
+  local ip=`ipconfig getifaddr en0`
+
+  echo $ip | tr -d '\n' | pbcopy
+  echo $ip
+}
+
+# iTunes
+alias nolyrics="rm -rf ~/Library/iTunes/iTunes\ Plug-ins/MiniLyrics\ for\ iTunes.bundle"
+alias lyrics="cp -r ~/.sav ~/Library/iTunes/iTunes\ Plug-ins/MiniLyrics\ for\ iTunes.bundle"
+alias opengenres="open  /Applications/iTunes.app/Contents/Resources/"
+alias editgenres="sudo sub /Applications/iTunes.app/Contents/Resources/genres.plist"
+alias itunesscripts="cd Library/iTunes/Scripts/"
+
+# Utilities
+serve() { ruby -run -e httpd . -p 5000 }
+servepy() { python -m SimpleHTTPServer 8000 }
+alias mounted="mount | column -t"
+sman() { man "${1}" | col -b | subl }
+alias rtop="top -o rsize"
+alias ctop="top -o cpu"
+alias rot13="tr 'A-Za-z' 'N-ZA-Mn-za-m'"
+
+# Entertainment
+alias cowfortune="clear && fortune -a | cowsay | lolcat"
+alias cowfact="clear && elinks -dump http://randomfunfacts.com  | sed -n '/^| /p' | tr -d \| | cowsay | lolcat"
+alias dunnet="emacs -batch -l dunnet"
+alias emacs_games="ls /usr/share/emacs/22.1/lisp/play/*.elc | column -t"
+
+# Apps
+alias check='rspec --format documentation'
+alias pow_restart='touch ~/.pow/restart.txt'
+alias sublime_session='vi ~/Library/Application\ Support/Sublime\ Text\ 2/Settings/Session.sublime_session'
+
+# Octopress
+alias go!='./go!'
+alias go='./go'
+alias blog='cd ~/blog'
+
+# Ruby / Rails
+alias be='bundle exec'
+alias rc='bundle exec rails c'
+alias debug='pry-remote'
+
+##########################
+###  ZSH CONFIGURATION ###
+##########################
+
+unsetopt CORRECT
+
+expand-or-complete-with-dots() {
+  echo -n "\e[31m......\e[0m"
+  zle expand-or-complete
+  zle redisplay
+}
+zle -N expand-or-complete-with-dots
+bindkey "^I" expand-or-complete-with-dots
+
+zmodload -i zsh/parameter
+insert-last-command-output() { LBUFFER+="$(eval $history[$((HISTCMD-1))])" }
+zle -N insert-last-command-output
+bindkey "^X^L" insert-last-command-output
+
+#############
+### OTHER ###
+#############
+
+# rbenv
+# eval "$(rbenv init -)"
+# eval "$(rbenv init - --no-rehash)"
+# if which rbenv > /dev/null; then eval "$(rbenv init -)"; fi
+eval "$(rbenv init - --no-rehash)"
+
+### Added by the Heroku Toolbelt
+export PATH="/usr/local/heroku/bin:$PATH"
+export PATH=./bin:$PATH
